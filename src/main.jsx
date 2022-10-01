@@ -1,13 +1,16 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { Vector3 } from "three";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { Loader, Vector3 } from "three";
 import Info from "./Info.jsx";
 import fondo from "./assets/starsBackground.webp";
 import addEarth from "./Earth.jsx";
 import "./index.css";
-
 
 // Function to set all the scene elements
 function init() {
@@ -24,33 +27,85 @@ function init() {
   // Scene
   const scene = new THREE.Scene();
 
-  // Texture Loader
-  const textureLoader = new THREE.TextureLoader();
-  textureLoader.load(fondo , function(texture)
-  {
-      scene.background = texture; 
-  });
-
-  // Objects
-  // Earth
-  const EarthSphere = addEarth()
-  EarthSphere.rotation.x = 90 * Math.PI / 180
-  scene.add(EarthSphere);
-
-  // Light
- const light1 = new THREE.DirectionalLight(0xe8e6e3, 0.5);
- light1.position.set(0, 4, 0);
- light1.lookAt(new Vector3());
- light1.castShadow = false;
- scene.add(light1);
-  
-
-
   // Canvas sizes
   const sizes = {
     width: window.innerWidth,
     height: window.innerHeight,
   };
+
+  
+  // Camera
+  const camera = new THREE.PerspectiveCamera(
+    75,
+    sizes.width / sizes.height,
+    0.1,
+    100
+  );
+
+  // Camera position
+  camera.up.set(0, 0, 1);
+
+
+
+  // Texture Loader
+  const textureLoader = new THREE.TextureLoader();
+  textureLoader.load(fondo, function (texture) {
+    scene.background = texture;
+  });
+
+
+
+
+
+  // Object Loader
+  const gltfLoader = new GLTFLoader();
+  let ISSMODEL = null;
+  gltfLoader.load(
+    "src/assets/Models/ISS_2016.glb",
+    function ( gltf ) {
+
+      ISSMODEL = gltf.scene.children[ 0 ];
+      ISSMODEL.position.set( 0, 0, 2 );
+      ISSMODEL.scale.set( 0.00005, 0.00005, 0.00005 );
+      camera.position.set(
+        ISSMODEL.position.x * 1.5,
+        ISSMODEL.position.y * 1.5,
+        ISSMODEL.position.z * 1.5
+       );
+      camera.lookAt( ISSMODEL.position );
+
+      scene.add( ISSMODEL )
+  
+      // gltf.animations; // Array<THREE.AnimationClip>
+      // gltf.scene; // THREE.Group
+      // gltf.scenes; // Array<THREE.Group>
+      // gltf.cameras; // Array<THREE.Camera>
+      // gltf.asset; // Object
+  
+    },
+
+  )
+
+
+// #0a5cff
+  // Objects
+  // Earth
+  // let viewVector = new THREE.Vector3().subVectors( camera.position, object.glow.getWorldPosition());
+  const EarthSphere = addEarth();
+  EarthSphere.rotation.x = (90 * Math.PI) / 180;
+  scene.add(EarthSphere);
+
+  // Light
+  const light1 = new THREE.DirectionalLight(0xe8e6e3, 0.5);
+  light1.position.set(0, 4, 0);
+  light1.lookAt(new Vector3());
+  light1.castShadow = false;
+  scene.add(light1);
+
+  const light3 = new THREE.AmbientLight(0xffffff, 0.5);
+  scene.add(light3);
+  
+  
 
   // Function to resize the canvas
   window.addEventListener("resize", () => {
@@ -67,19 +122,6 @@ function init() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   });
 
-  // Camera
-  const camera = new THREE.PerspectiveCamera(
-    75,
-    sizes.width / sizes.height,
-    0.1,
-    100
-  );
-
-  // Camera position
-  camera.position.x = 1;
-  camera.position.y = 1;
-  camera.position.z = 2;
-  camera.up.set(0, 0, 1);
 
   // Controls
   const controls = new OrbitControls(camera, canvas);
@@ -92,6 +134,10 @@ function init() {
   renderer.setSize(sizes.width, sizes.height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
+
+
+
+
   // Animate
   const clock = new THREE.Clock();
   const tick = () => {
@@ -103,6 +149,10 @@ function init() {
 
     // Call tick again on the next frame
     window.requestAnimationFrame(tick);
+
+
+    
+
   };
 
   tick();

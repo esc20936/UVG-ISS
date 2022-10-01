@@ -9,7 +9,7 @@ const dayNightShader = () => {
         varying vec2 vUv;
         varying vec3 vNormal;
         varying vec3 vSunDir;
-        
+        varying float intensity;
         uniform vec3 sunDirection;
         
         void main() {
@@ -20,6 +20,9 @@ const dayNightShader = () => {
             vSunDir = mat3(viewMatrix) * sunDirection;
         
             gl_Position = projectionMatrix * mvPosition;
+
+            intensity = pow(dot(normalize(vNormal), normalize(vSunDir)), 5.0);
+            
         }
         `,
         fragment: `
@@ -44,11 +47,15 @@ const dayNightShader = () => {
         
             vec3 color = mix(nightColor, dayColor, mixAmount);
 
+            vec3 glow = vec3(0.0, 0.0, 82)*0.5;
+
             vec3 finalColor = mix(color, cloudsColor, 0.15);
+
+            vec3 finalColor2 = mix(finalColor, glow, 0.0015);
 
            
         
-            gl_FragColor = vec4(finalColor, 1.0);
+            gl_FragColor = vec4(finalColor2, 1.0);
         }
         `
     }
@@ -60,9 +67,9 @@ const addEarth = () => {
     let earthGeometry = new THREE.SphereGeometry(1, 32, 32);
     let earthMaterial = new THREE.ShaderMaterial({
 
-        bumpScale: 5,
-        specular: new THREE.Color(0x333333),
-        shininess: 50,
+        // bumpScale: 5,
+        // specular: new THREE.Color(0x333333),
+        // shininess: 50,
         uniforms: {
             sunDirection: {
                 value: new THREE.Vector3(0, 4, 0)
