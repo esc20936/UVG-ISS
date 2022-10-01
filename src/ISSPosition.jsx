@@ -1,4 +1,5 @@
 import gsap from "gsap";
+
 function getPositionISS(){
     return fetch(`http://api.open-notify.org/iss-now.json`)
     .then((response) => { 
@@ -29,17 +30,9 @@ function convertLongitudeLatitudeToXYZ(lon=0,lat=0, R=2) {
     return {x, y, z}
 }
 
-function updateISSPOSITION(issDATA,LastPosition, ISSMODEL){
-    if(LastPosition===undefined){
-        ISSMODEL.position.set(issDATA.x ,issDATA.y ,issDATA.z)
-    }else{
-        // Animate movement of ISS bewteen last position and new position
-        gsap.to(ISSMODEL.position, { duration: 5, x: issDATA.x, y: issDATA.y, z: issDATA.z, ease: "power1.out" });
-    }
-   return  [issDATA.x ,issDATA.y ,issDATA.z]
-
+// get future ISS position coords
+function getFutureISSPosition(latitude, longitude ) {
     
-    // console.log(issDATA)
 }
 
-export {getPositionISS, convertLongitudeLatitudeToXYZ, updateISSPOSITION};
+export {getPositionISS, convertLongitudeLatitudeToXYZ, getFutureISSPosition};

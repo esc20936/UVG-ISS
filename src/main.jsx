@@ -1,83 +1,83 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import * as THREE from "three";
+import './index.css'
+import * as THREE from 'three'
+import { getPositionISS, convertLongitudeLatitudeToXYZ, getFutureISSPosition } from './ISSPosition'
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js'
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { Vector3 } from "three";
-import Info from "./Info.jsx";
+import * as dat from 'lil-gui'
+import model from './assets/Models/ISS_2016.glb?url';
 import fondo from "./assets/starsBackground.webp";
-import addEarth from "./Earth.jsx";
-import * as dat from "lil-gui";
-import { getPositionISS, convertLongitudeLatitudeToXYZ, updateISSPOSITION } from "./ISSPosition.jsx";
+import day from './assets/earthDay.webp';
+import night from './assets/earthNight.webp';
+import clouds from './assets/earthClouds.webp'; 
+import gsap from 'gsap'
 
-
-import "./index.css";
-
-// Function to set all the scene elements
-function init() {
-
-  // Config for the GUI
-  const config = {
+// DATOS GENERALES
+const config = {
     followISS: true,
+}
 
-  }
+let timeLabek = document.getElementsByClassName('TimeLabel')[0];
+setInterval(() => {
+    timeLabek.innerHTML = new Date().toUTCString();
+}, 1000);
 
+// Canvas
+const canvas = document.querySelector('canvas.webgl')
 
+// Scene
+const scene = new THREE.Scene()
 
+// Axis helper
+const axesHelper = new THREE.AxesHelper( 5 );
+axesHelper.visible = false
+scene.add( axesHelper );
 
-  // Create Component to show info
-  ReactDOM.createRoot(document.getElementById("root")).render(
-    <React.StrictMode>
-      <Info />
-    </React.StrictMode>
-  );
-
-  // Canvas
-  const canvas = document.querySelector("canvas.webgl");
-
-  // Scene
-  const scene = new THREE.Scene();
-
-  // Canvas sizes
-  const sizes = {
-    width: window.innerWidth,
-    height: window.innerHeight,
-  };
-
-  // GUI Controls
-  const gui = new dat.GUI()
-  gui.add(config, 'followISS').name('Follow ISS')
-  
-  // Camera
-  const camera = new THREE.PerspectiveCamera(
-    75,
-    sizes.width / sizes.height,
-    0.1,
-    100
-  );
-
-  // Camera position
-  camera.up.set(0, 0, 1);
+/**
+ * GUI control
+ */
+const gui = new dat.GUI()
+gui.add(config, 'followISS').name('Follow ISS')
+// add un gui time text
+// gui.add(TIME, 'userFriendly')
 
 
+// gui.add(axesHelper, 'visible').name("Axis Helper")
 
-  // Texture Loader
-  const textureLoader = new THREE.TextureLoader();
-  textureLoader.load(fondo, function (texture) {
-    scene.background = texture;
-  });
+/**
+ * Loader de texturas
+ */
+
+const textureLoader = new THREE.TextureLoader();
+
+/**
+ * Fondo del simulador
+ */
+textureLoader.load(fondo , function(texture)
+{
+    scene.background = texture; 
+});
+
+/**
+ * TODO GROUP
+ */
+const sceneGroup = new THREE.Group();
 
 
-
-  // Object Loader
-  const gltfLoader = new GLTFLoader();
+        
+/**
+ * Modelo de la ISS
+ */
+const gltfLoader = new GLTFLoader();
   let ISSMODEL = null;
   gltfLoader.load(
-    "src/assets/Models/ISS_2016.glb",
+    model,
     function ( gltf ) {
 
       ISSMODEL = gltf.scene.children[ 0 ];
-      let newMaterial = new THREE.MeshPhongMaterial( { color: "#7a7a7a" } );
+      let newMaterial = new THREE.MeshPhongMaterial( { color: "#bfbfbf" } );
 
       ISSMODEL.material = newMaterial;
 
@@ -92,93 +92,216 @@ function init() {
 
       scene.add( ISSMODEL )
   
-      // gltf.animations; // Array<THREE.AnimationClip>
-      // gltf.scene; // THREE.Group
-      // gltf.scenes; // Array<THREE.Group>
-      // gltf.cameras; // Array<THREE.Camera>
-      // gltf.asset; // Object
-  
     },
-
   )
+    
 
-  // Objects
-  // Earth
-  // let viewVector = new THREE.Vector3().subVectors( camera.position, object.glow.getWorldPosition());
-  const EarthSphere = addEarth();
-  EarthSphere.rotation.x = (90 * Math.PI) / 180;
-  scene.add(EarthSphere);
-
-  // Light
-  const light1 = new THREE.DirectionalLight(0xe8e6e3, 0.5);
-  light1.position.set(0, 4, 0);
-  light1.lookAt(new Vector3());
-  light1.castShadow = false;
-  scene.add(light1);
-
-  const light3 = new THREE.AmbientLight(0xffffff, 0.8);
-  scene.add(light3);
-  
-  
-
-  // Function to resize the canvas
-  window.addEventListener("resize", () => {
-    // Update sizes
-    sizes.width = window.innerWidth;
-    sizes.height = window.innerHeight;
-
-    // Update camera
-    camera.aspect = sizes.width / sizes.height;
-    camera.updateProjectionMatrix();
-
-    // Update renderer
-    renderer.setSize(sizes.width, sizes.height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  });
+function updateISSPOSITION(issDATA,LastPosition){
+    if(LastPosition===undefined){
+        ISSMODEL.position.set(issDATA.x ,issDATA.y ,issDATA.z)
+    }else{
+        gsap.to(ISSMODEL.position, { duration: 5, x: issDATA.x, y: issDATA.y, z: issDATA.z, ease: "power1.out" });
+    }
+    lastPosition = [issDATA.x ,issDATA.y ,issDATA.z]
+}
 
 
-  // Controls
-  const controls = new OrbitControls(camera, canvas);
-  controls.enableDamping = true;
-
-  // Renderer
-  const renderer = new THREE.WebGLRenderer({
-    canvas: canvas,
-  });
-  renderer.setSize(sizes.width, sizes.height);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-
-
-  // ISS Position Manager
+/**
+ * Posicion real de la ISS
+ * En coordenadas cartesianas
+ */
 let iss_data = {}
 let issDATA = {}
-
-
 // Call API to get ISS position every 5 seconds
-let lastPosition = null
+let lastPosition = []
+let trajectory = false
+let coordinatesLabel = document.getElementsByClassName("CoordinatesLabel")[0];
 setInterval(() => {
     getPositionISS().then(data => {
         iss_data = data
         issDATA = convertLongitudeLatitudeToXYZ(iss_data.iss_position.longitude, iss_data.iss_position.latitude, 2)
-        lastPosition = updateISSPOSITION(issDATA,lastPosition, ISSMODEL)
+        coordinatesLabel.innerHTML = `Lat: ${iss_data.iss_position.latitude}° Long: ${iss_data.iss_position.longitude}°`
+        if(!trajectory){
+          trajectory = true
+          getFutureISSPosition(iss_data.iss_position.latitude, iss_data.iss_position.longitude)
+        } 
+        updateISSPOSITION(issDATA,lastPosition)
     })
 }, 5000);
 
 
 
+const dayNightShader = () => {
+    return {
+        vertex: `
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        varying vec3 vSunDir;
+        
+        uniform vec3 sunDirection;
+        
+        void main() {
+            vUv = uv;
+            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        
+            vNormal = normalMatrix * normal;
+            vSunDir = mat3(viewMatrix) * sunDirection;
+        
+            gl_Position = projectionMatrix * mvPosition;
+        }
+        `,
+        fragment: `
+        uniform sampler2D dayTexture;
+        uniform sampler2D nightTexture;
+        uniform sampler2D cloudsTexture;
+        
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        varying vec3 vSunDir;
+        
+        void main(void) {
+            vec3 dayColor = texture2D(dayTexture, vUv).rgb;
+            vec3 nightColor = texture2D(nightTexture, vUv).rgb;
+            vec3 cloudsColor = texture2D(cloudsTexture, vUv).rgb;
 
-  // Animate
-  const clock = new THREE.Clock();
-  const tick = () => {
-    const elapsedTime = clock.getElapsedTime();
-    controls.update();
+            float cosineAngleSunToNormal = dot(normalize(vNormal), normalize(vSunDir));
+        
+            cosineAngleSunToNormal = clamp(cosineAngleSunToNormal * 5.0, -1.0, 1.0);
+        
+            float mixAmount = cosineAngleSunToNormal * 0.5 + 0.5;
+        
+            vec3 color = mix(nightColor, dayColor, mixAmount);
 
-    // Render
-    renderer.render(scene, camera);
+            vec3 finalColor = mix(color, cloudsColor, 0.15);
 
-    // Call tick again on the next frame
-    window.requestAnimationFrame(tick);
+           
+        
+            gl_FragColor = vec4(finalColor, 1.0);
+        }
+        `
+    }
+}
+
+
+const addEarth = () => {
+    let earthGeometry = new THREE.SphereGeometry(1, 32, 32);
+    let earthMaterial = new THREE.ShaderMaterial({
+
+        bumpScale: 5,
+        specular: new THREE.Color(0x333333),
+        shininess: 50,
+        uniforms: {
+            sunDirection: {
+                value: new THREE.Vector3(0, 4, 0)
+            },
+            dayTexture: {
+                value: textureLoader.load(day)
+            },
+            nightTexture: {
+                value: textureLoader.load(night)
+            },
+            cloudsTexture: {
+                value: textureLoader.load(clouds)
+            }
+        },
+
+        vertexShader: dayNightShader().vertex,
+        fragmentShader: dayNightShader().fragment
+    });
+
+   return new THREE.Mesh(earthGeometry, earthMaterial);
+}
+
+const EarthSphere = addEarth()
+scene.add(EarthSphere)
+    
+
+EarthSphere.rotation.x = 90 * Math.PI / 180
+
+
+const light3 = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(light3);
+
+
+
+
+
+
+
+/**
+ * Tamaño del canvas
+ */
+const sizes = {
+    width: window.innerWidth,
+    height: window.innerHeight
+}
+
+// Funcion para actualizar el tamaño del canvas
+
+window.addEventListener('resize', () =>
+{
+    // Update sizes
+    sizes.width = window.innerWidth
+    sizes.height = window.innerHeight
+
+    // Update camera
+    camera.aspect = sizes.width / sizes.height
+    camera.updateProjectionMatrix()
+
+    // Update renderer
+    renderer.setSize(sizes.width, sizes.height)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+})
+
+/**
+ * Camara
+ */
+const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
+camera.position.x = 1
+camera.position.y = 1
+camera.position.z = 2
+camera.up.set( 0, 0, 1 );
+
+
+
+scene.add(EarthSphere)
+scene.add(camera)
+scene.add(sceneGroup)
+
+
+
+
+// Controls
+const controls = new OrbitControls(camera, canvas)
+controls.enableDamping = true
+
+/**
+ * Renderer
+ */
+const renderer = new THREE.WebGLRenderer({
+    canvas: canvas
+})
+renderer.setSize(sizes.width, sizes.height)
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+/**
+ * Animate
+ */
+let seed = 0;
+let seedx, seedy, seedz = 0;
+const clock = new THREE.Clock()
+const tick = () =>
+{
+    // Tiempo transcurrido
+    const elapsedTime = clock.getElapsedTime()
+    // Update controls
+    controls.update()
+
+
+    // ISSMODELGROUP.position.y = 1.5;
+    // ISSMODELGROUP.position.x = 1.5;
+    // ISSMODELGROUP.position.z = 1.5;
+
 
     if(ISSMODEL != null){
       if(config.followISS){
@@ -190,14 +313,21 @@ setInterval(() => {
           camera.lookAt( ISSMODEL.position );
       }
       ISSMODEL.lookAt(new Vector3(0,0,0))
-
-
-      
     }
 
-  };
+    
+    
+    // Render
+    renderer.render(scene, camera)
+    
+    // Call tick again on the next frame
+    window.requestAnimationFrame(tick)
 
-  tick();
+
+    // Fixed light position
+    // lightHolder.quaternion.copy(camera.quaternion)
 }
 
-init();
+tick()
+
+
