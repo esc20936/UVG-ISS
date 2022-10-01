@@ -77,9 +77,6 @@ const gltfLoader = new GLTFLoader();
     function ( gltf ) {
 
       ISSMODEL = gltf.scene.children[ 0 ];
-      let newMaterial = new THREE.MeshPhongMaterial( { color: "#bfbfbf" } );
-
-      ISSMODEL.material = newMaterial;
 
       ISSMODEL.position.set( 0, 0, 2 );
       ISSMODEL.scale.set( 0.00005, 0.00005, 0.00005 );
