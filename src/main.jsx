@@ -3,17 +3,28 @@ import ReactDOM from "react-dom/client";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
-import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
-import { Loader, Vector3 } from "three";
+import { Vector3 } from "three";
 import Info from "./Info.jsx";
 import fondo from "./assets/starsBackground.webp";
 import addEarth from "./Earth.jsx";
+import * as dat from "lil-gui";
+import { getPositionISS, convertLongitudeLatitudeToXYZ, updateISSPOSITION } from "./ISSPosition.jsx";
+
+
 import "./index.css";
 
 // Function to set all the scene elements
 function init() {
+
+  // Config for the GUI
+  const config = {
+    followISS: true,
+
+  }
+
+
+
+
   // Create Component to show info
   ReactDOM.createRoot(document.getElementById("root")).render(
     <React.StrictMode>
@@ -33,6 +44,9 @@ function init() {
     height: window.innerHeight,
   };
 
+  // GUI Controls
+  const gui = new dat.GUI()
+  gui.add(config, 'followISS').name('Follow ISS')
   
   // Camera
   const camera = new THREE.PerspectiveCamera(
@@ -55,8 +69,6 @@ function init() {
 
 
 
-
-
   // Object Loader
   const gltfLoader = new GLTFLoader();
   let ISSMODEL = null;
@@ -65,6 +77,10 @@ function init() {
     function ( gltf ) {
 
       ISSMODEL = gltf.scene.children[ 0 ];
+      let newMaterial = new THREE.MeshPhongMaterial( { color: "#7a7a7a" } );
+
+      ISSMODEL.material = newMaterial;
+
       ISSMODEL.position.set( 0, 0, 2 );
       ISSMODEL.scale.set( 0.00005, 0.00005, 0.00005 );
       camera.position.set(
@@ -86,8 +102,6 @@ function init() {
 
   )
 
-
-// #0a5cff
   // Objects
   // Earth
   // let viewVector = new THREE.Vector3().subVectors( camera.position, object.glow.getWorldPosition());
@@ -102,7 +116,7 @@ function init() {
   light1.castShadow = false;
   scene.add(light1);
 
-  const light3 = new THREE.AmbientLight(0xffffff, 0.5);
+  const light3 = new THREE.AmbientLight(0xffffff, 0.8);
   scene.add(light3);
   
   
@@ -136,6 +150,22 @@ function init() {
 
 
 
+  // ISS Position Manager
+let iss_data = {}
+let issDATA = {}
+
+
+// Call API to get ISS position every 5 seconds
+let lastPosition = null
+setInterval(() => {
+    getPositionISS().then(data => {
+        iss_data = data
+        issDATA = convertLongitudeLatitudeToXYZ(iss_data.iss_position.longitude, iss_data.iss_position.latitude, 2)
+        lastPosition = updateISSPOSITION(issDATA,lastPosition, ISSMODEL)
+    })
+}, 5000);
+
+
 
 
   // Animate
@@ -150,8 +180,20 @@ function init() {
     // Call tick again on the next frame
     window.requestAnimationFrame(tick);
 
+    if(ISSMODEL != null){
+      if(config.followISS){
+        camera.position.set(
+          ISSMODEL.position.x * 1.5,
+          ISSMODEL.position.y * 1.5,
+          ISSMODEL.position.z * 1.5
+          );
+          camera.lookAt( ISSMODEL.position );
+      }
+      ISSMODEL.lookAt(new Vector3(0,0,0))
 
-    
+
+      
+    }
 
   };
 
