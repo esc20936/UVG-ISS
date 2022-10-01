@@ -5,6 +5,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { Vector3 } from "three";
 import Info from "./Info.jsx";
 import fondo from "./assets/starsBackground.webp";
+import addEarth from "./Earth.jsx";
 import "./index.css";
 
 
@@ -32,13 +33,9 @@ function init() {
 
   // Objects
   // Earth
-  const earthGeometry = new THREE.SphereGeometry(1, 32, 32);
-  const earthMaterial = new THREE.MeshPhongMaterial({
-    color: 0x0000FF,    
-  });
-
-  const earth = new THREE.Mesh(earthGeometry, earthMaterial);
-  scene.add(earth);
+  const EarthSphere = addEarth()
+  EarthSphere.rotation.x = 90 * Math.PI / 180
+  scene.add(EarthSphere);
 
   // Light
  const light1 = new THREE.DirectionalLight(0xe8e6e3, 0.5);
