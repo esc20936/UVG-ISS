@@ -21,6 +21,9 @@ const config = {
     followISS: true,
     facilitiesF: true,
     slider1: 0,
+    repo: () => {
+        window.open("https://github.com/esc20936/UVG-ISS");
+    }
 }
 let lines = []
 let timeLabek = document.getElementsByClassName('TimeLabel')[0];
@@ -108,6 +111,7 @@ gui.add(config, 'facilitiesF').name("Nasa's locations").onChange((value) => {
         closeTo.innerHTML = ''
     }
 })
+gui.add(config, 'repo').name('Source code')
 
 
 // gui.add(axesHelper, 'visible').name("Axis Helper")
@@ -302,7 +306,7 @@ const dayNightShader = () => {
 const addEarth = () => {
     // get GMT hour
     let date = new Date().getUTCHours();
-    console.log(date);
+    // console.log(date);
 
     let earthGeometry = new THREE.SphereGeometry(1, 32, 32);
     let earthMaterial = new THREE.ShaderMaterial({
