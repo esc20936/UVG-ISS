@@ -46,7 +46,7 @@ const NASAS_FACILITIES = {
         'lat':-33.45,
         'long':-70.67,
     },
-    'TrollSat Antartica':{
+    'TrollSat Antarctica':{
         'lat':-72.016,
         'long':2.53,
     },
