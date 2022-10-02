@@ -102,7 +102,7 @@ scene.add(facilities)
  */
 const gui = new dat.GUI()
 gui.add(config, 'followISS').name('Follow ISS')
-gui.add(config, 'facilitiesF').name("Nasa's locations").onChange((value) => {
+gui.add(config, 'facilitiesF').name("show ground stations' locations").onChange((value) => {
     facilities.visible = value
     lines.forEach(line => {
         line.visible = value
