@@ -170,6 +170,19 @@ setInterval(() => {
 }, 5000); 
 
 
+// Function that will receive an hour in GMT and will calculate the coords of the sunDirection
+// Knowing that at 12:00 GMT the sun is at 51.4780° N, 0.0015° W
+function getSunDirection(hour){
+    // Convert to radians
+    let hourRadians = hour * (Math.PI/12)
+    let latRadians = 51.4780 * (Math.PI/180)
+    let longRadians = 0.0015 * (Math.PI/180)
+    let x = Math.cos(hourRadians) * Math.cos(latRadians) * Math.cos(longRadians) + Math.sin(hourRadians) * Math.sin(latRadians)
+    let y = Math.cos(hourRadians) * Math.cos(latRadians) * Math.sin(longRadians) - Math.sin(hourRadians) * Math.cos(longRadians)
+    let z = Math.cos(hourRadians) * Math.sin(latRadians)
+    return new Vector3(-x,-y,z)
+}
+
 
 
 const dayNightShader = () => {
@@ -225,13 +238,17 @@ const dayNightShader = () => {
 
 
 const addEarth = () => {
+    // get GMT hour
+    let date = new Date().getUTCHours();
+    console.log(date);
+
     let earthGeometry = new THREE.SphereGeometry(1, 32, 32);
     let earthMaterial = new THREE.ShaderMaterial({
 
         
         uniforms: {
             sunDirection: {
-                value: new THREE.Vector3(0, 4, 0)
+                value: getSunDirection(date)
             },
             dayTexture: {
                 value: textureLoader.load(day)
