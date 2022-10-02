@@ -30,9 +30,24 @@ function convertLongitudeLatitudeToXYZ(lon=0,lat=0, R=2) {
     return {x, y, z}
 }
 
-// get future ISS position coords
-function getFutureISSPosition(latitude, longitude ) {
-    
+
+async function getOverPlace(lat, lon){
+    try{
+        // validate response from api 
+        let response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`)
+        if(response.ok){
+            let data = await response.json()
+            return data
+        }else{
+            return null
+        }
+        
+    }catch(err){
+        // console.log(err)
+        return false
+    }
+
 }
 
-export {getPositionISS, convertLongitudeLatitudeToXYZ, getFutureISSPosition};
+
+export {getPositionISS, convertLongitudeLatitudeToXYZ,getOverPlace};

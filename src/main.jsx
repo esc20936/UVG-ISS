@@ -1,6 +1,6 @@
 import './index.css'
 import * as THREE from 'three'
-import { getPositionISS, convertLongitudeLatitudeToXYZ, getFutureISSPosition } from './ISSPosition'
+import { getPositionISS, convertLongitudeLatitudeToXYZ,getOverPlace} from './ISSPosition'
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js'
@@ -14,12 +14,15 @@ import night from './assets/earthNight.webp';
 import clouds from './assets/earthClouds.webp'; 
 import gsap from 'gsap'
 
+
 // DATOS GENERALES
 const config = {
     followISS: true,
+    slider1: 0, 
 }
 
 let timeLabek = document.getElementsByClassName('TimeLabel')[0];
+let overLabel = document.getElementsByClassName('overLabel')[0];
 setInterval(() => {
     timeLabek.innerHTML = new Date().toUTCString();
 }, 1000);
@@ -35,13 +38,43 @@ const axesHelper = new THREE.AxesHelper( 5 );
 axesHelper.visible = false
 scene.add( axesHelper );
 
+
+       
+/**
+ * Modelo de la ISS
+ */
+ const gltfLoader = new GLTFLoader();
+ let ISSMODEL = null;
+ gltfLoader.load(
+   model,
+   function ( gltf ) {
+
+     ISSMODEL = gltf.scene.children[ 0 ];
+
+     ISSMODEL.position.set( 0, 0, 2 );
+     ISSMODEL.scale.set( 0.00005, 0.00005, 0.00005 );
+     camera.position.set(
+       ISSMODEL.position.x * 1.5,
+       ISSMODEL.position.y * 1.5,
+       ISSMODEL.position.z * 1.5
+      );
+     camera.lookAt( ISSMODEL.position );
+
+     scene.add( ISSMODEL )
+ 
+   },
+ )
+   
+
+
+
+
 /**
  * GUI control
  */
 const gui = new dat.GUI()
 gui.add(config, 'followISS').name('Follow ISS')
-// add un gui time text
-// gui.add(TIME, 'userFriendly')
+
 
 
 // gui.add(axesHelper, 'visible').name("Axis Helper")
@@ -66,40 +99,17 @@ textureLoader.load(fondo , function(texture)
 const sceneGroup = new THREE.Group();
 
 
-        
-/**
- * Modelo de la ISS
- */
-const gltfLoader = new GLTFLoader();
-  let ISSMODEL = null;
-  gltfLoader.load(
-    model,
-    function ( gltf ) {
-
-      ISSMODEL = gltf.scene.children[ 0 ];
-
-      ISSMODEL.position.set( 0, 0, 2 );
-      ISSMODEL.scale.set( 0.00005, 0.00005, 0.00005 );
-      camera.position.set(
-        ISSMODEL.position.x * 1.5,
-        ISSMODEL.position.y * 1.5,
-        ISSMODEL.position.z * 1.5
-       );
-      camera.lookAt( ISSMODEL.position );
-
-      scene.add( ISSMODEL )
-  
-    },
-  )
-    
-
+ 
 function updateISSPOSITION(issDATA,LastPosition){
-    if(LastPosition===undefined){
-        ISSMODEL.position.set(issDATA.x ,issDATA.y ,issDATA.z)
-    }else{
-        gsap.to(ISSMODEL.position, { duration: 5, x: issDATA.x, y: issDATA.y, z: issDATA.z, ease: "power1.out" });
+    if(config.slider1===0){
+        if(LastPosition===undefined){
+            ISSMODEL.position.set(issDATA.x ,issDATA.y ,issDATA.z)
+        }else{
+            gsap.to(ISSMODEL.position, { duration: 5, x: issDATA.x, y: issDATA.y, z: issDATA.z, ease: "power1.out" });
+        }
     }
     lastPosition = [issDATA.x ,issDATA.y ,issDATA.z]
+    
 }
 
 
@@ -120,11 +130,45 @@ setInterval(() => {
         coordinatesLabel.innerHTML = `Lat: ${iss_data.iss_position.latitude}° Long: ${iss_data.iss_position.longitude}°`
         if(!trajectory){
           trajectory = true
-          getFutureISSPosition(iss_data.iss_position.latitude, iss_data.iss_position.longitude)
+        //   getFutureISSPosition(iss_data.iss_position.latitude, iss_data.iss_position.longitude)
         } 
         updateISSPOSITION(issDATA,lastPosition)
     })
 }, 5000);
+
+function getOver(){
+    try{
+
+        getOverPlace(iss_data.iss_position.latitude, iss_data.iss_position.longitude)
+        .then(data => {
+            if(data){
+    
+                if(data['address']['state'] && data['address']['country']){
+                    overLabel.innerHTML ='over: '+ data['address']['state'] + ', ' + data['address']['country']
+                }else{
+                    overLabel.innerHTML ='over: '+ data['display_name']
+                }
+            }
+            else
+                overLabel.innerHTML ='over: Ocean'
+        }).catch(err => {
+            overLabel.innerHTML ='over: Ocean'
+        })
+    }
+    catch(err){
+        overLabel.innerHTML ='over: Ocean'
+    }
+}
+
+
+setInterval(() => {
+    try{
+        getOver()
+    }catch(err){
+        console.log(err)
+    }
+}, 5000); 
+
 
 
 
@@ -184,9 +228,7 @@ const addEarth = () => {
     let earthGeometry = new THREE.SphereGeometry(1, 32, 32);
     let earthMaterial = new THREE.ShaderMaterial({
 
-        bumpScale: 5,
-        specular: new THREE.Color(0x333333),
-        shininess: 50,
+        
         uniforms: {
             sunDirection: {
                 value: new THREE.Vector3(0, 4, 0)
