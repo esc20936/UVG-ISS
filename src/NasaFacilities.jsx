@@ -2,11 +2,11 @@ import * as THREE from 'three';
 // import { convertLongitudeLatitudeToXYZ } from './ISSPosition';
 
 const NASAS_FACILITIES = {
-    'Fairbanks':{
+    'Alaska Fairbanks':{
         'lat': 64.8,
         'long': -147.5
     },
-    'SSC':{
+    'North Pole AK':{
         'lat': 64.8,
         'long': -147.5
     },
@@ -18,19 +18,19 @@ const NASAS_FACILITIES = {
         'lat': 37.9,
         'long': -75.5
     },
-    'KSAT' :{
+    'Svalbard Norway' :{
         'lat': 78.229772,
         'long': 15.407786,
     },
-    'SSC Sweden':{
+    'Kiruna Sweden':{
         'lat': 67.857128,
         'long': 20.96,
     },
-    'SSC Germany':{
+    'Weilheim Germany':{
         'lat': 49.54,
         'long': 8.66,
     },
-    'KSAT Singapore':{
+    'Singapore Malaysia':{
         'lat': 1.35,
         'long': 103.82,
     },
@@ -46,7 +46,7 @@ const NASAS_FACILITIES = {
         'lat':-33.45,
         'long':-70.67,
     },
-    'KSAT Antartica':{
+    'TrollSat Antartica':{
         'lat':-72.016,
         'long':2.53,
     },
@@ -58,7 +58,7 @@ const NASAS_FACILITIES = {
         'lat': -77.85,
         'long': 166.67,
     },
-    'SSC Australia':{
+    'Dongara Australia':{
         'lat': -29.08,
         'long': 115.58,
     },

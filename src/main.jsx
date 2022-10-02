@@ -150,7 +150,7 @@ function updateISSPOSITION(issDATA,LastPosition){
     for(var key in NASAS_FACILITIES){
         let distance = new Vector3(issDATA.x ,issDATA.y ,issDATA.z).distanceTo(new Vector3(NASAS_FACILITIES[key].xyz.x,NASAS_FACILITIES[key].xyz.y,NASAS_FACILITIES[key].xyz.z))
         // console.log(distance)
-        if(distance < 1.5){
+        if(distance < 1.7){
             res += key + ", "
                 const material = new THREE.LineBasicMaterial( { color: 0xff0000 } );
                 const points = [new Vector3(issDATA.x ,issDATA.y ,issDATA.z),new Vector3(NASAS_FACILITIES[key].xyz.x,NASAS_FACILITIES[key].xyz.y,NASAS_FACILITIES[key].xyz.z)];
