@@ -5,6 +5,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
+import { NASAS_FACILITIES } from './NasaFacilities';
 import { Vector3 } from "three";
 import * as dat from 'lil-gui'
 import model from './assets/Models/ISS_2016.glb?url';
@@ -18,14 +19,24 @@ import gsap from 'gsap'
 // DATOS GENERALES
 const config = {
     followISS: true,
-    slider1: 0, 
+    facilitiesF: true,
+    slider1: 0,
 }
-
+let lines = []
 let timeLabek = document.getElementsByClassName('TimeLabel')[0];
 let overLabel = document.getElementsByClassName('overLabel')[0];
+let closeTo = document.getElementsByClassName('closeTo')[0];
 setInterval(() => {
     timeLabek.innerHTML = new Date().toUTCString();
 }, 1000);
+
+const addXYZCoordsToFacilities = () => {
+    for(var key in NASAS_FACILITIES){
+        NASAS_FACILITIES[key].xyz = convertLongitudeLatitudeToXYZ(NASAS_FACILITIES[key].long,NASAS_FACILITIES[key].lat,1)
+    }
+}
+addXYZCoordsToFacilities()
+
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -65,16 +76,38 @@ scene.add( axesHelper );
    },
  )
    
+function addFacilitiesToScene(){
+    let facilitiesGroup = new THREE.Group();
+    // console.log(NASAS_FACILITIES)
+    for(var key in NASAS_FACILITIES){
+        // console.log(key)
+        let geometry = new THREE.SphereGeometry( 0.025, 32, 32 );
+        let material = new THREE.MeshBasicMaterial( {color: 0xff0000} );
+        let sphere = new THREE.Mesh( geometry, material );
+        let position = convertLongitudeLatitudeToXYZ(NASAS_FACILITIES[key].long,NASAS_FACILITIES[key].lat,1)
+        sphere.position.set(position.x,position.y,position.z)
+        facilitiesGroup.add( sphere );
+    }
+    return facilitiesGroup
+}
 
-
-
+let facilities = addFacilitiesToScene()
+scene.add(facilities)
 
 /**
  * GUI control
  */
 const gui = new dat.GUI()
 gui.add(config, 'followISS').name('Follow ISS')
-
+gui.add(config, 'facilitiesF').name("Nasa's locations").onChange((value) => {
+    facilities.visible = value
+    lines.forEach(line => {
+        line.visible = value
+    });
+    if(!value){
+        closeTo.innerHTML = ''
+    }
+})
 
 
 // gui.add(axesHelper, 'visible').name("Axis Helper")
@@ -101,14 +134,43 @@ const sceneGroup = new THREE.Group();
 
  
 function updateISSPOSITION(issDATA,LastPosition){
-    if(config.slider1===0){
-        if(LastPosition===undefined){
-            ISSMODEL.position.set(issDATA.x ,issDATA.y ,issDATA.z)
-        }else{
-            gsap.to(ISSMODEL.position, { duration: 5, x: issDATA.x, y: issDATA.y, z: issDATA.z, ease: "power1.out" });
+    if(LastPosition===undefined){
+        ISSMODEL.position.set(issDATA.x ,issDATA.y ,issDATA.z)
+    }else{
+        gsap.to(ISSMODEL.position, { duration: 5, x: issDATA.x, y: issDATA.y, z: issDATA.z, ease: "power1.out" });
+    }
+    
+    lastPosition = [issDATA.x ,issDATA.y ,issDATA.z]
+    
+    lines.forEach(line => {
+        scene.remove(line)
+    });
+    lines=[]
+    let res = ""
+    for(var key in NASAS_FACILITIES){
+        let distance = new Vector3(issDATA.x ,issDATA.y ,issDATA.z).distanceTo(new Vector3(NASAS_FACILITIES[key].xyz.x,NASAS_FACILITIES[key].xyz.y,NASAS_FACILITIES[key].xyz.z))
+        // console.log(distance)
+        if(distance < 1.5){
+            res += key + ", "
+                const material = new THREE.LineBasicMaterial( { color: 0xff0000 } );
+                const points = [new Vector3(issDATA.x ,issDATA.y ,issDATA.z),new Vector3(NASAS_FACILITIES[key].xyz.x,NASAS_FACILITIES[key].xyz.y,NASAS_FACILITIES[key].xyz.z)];
+                const geometry = new THREE.BufferGeometry().setFromPoints( points );
+                const line = new THREE.Line( geometry, material );
+                lines.push( line );
+            
         }
     }
-    lastPosition = [issDATA.x ,issDATA.y ,issDATA.z]
+    if(config.facilitiesF){
+        lines.forEach(line => {
+            scene.add(line)
+        });
+    }
+    if(res.length > 0){
+        closeTo.innerHTML = "nearby nasa locations: \n" + res.slice(0, -2);
+    }else{
+        closeTo.innerHTML = ''
+    }
+    
     
 }
 
