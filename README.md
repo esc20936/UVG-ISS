@@ -12,9 +12,7 @@ Our solution is based on ThreeJS and it works as follows. After having loaded th
 Our project solves the challenge of tracking the international space station in real time while adding information that may be useful to the user, such as knowing which NASA's locations are close to the ISS.
 
 
-## Demo
 
-http://www.pabloescobardev.click:4002/
 
 
 ## Set up
